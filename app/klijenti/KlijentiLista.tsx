@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-
+import Link from "next/link";
 type Klijent = {
   id: string;
   ime: string;
@@ -224,7 +224,9 @@ export default function KlijentiLista({ pocetni }: { pocetni: Klijent[] }) {
                   {inicijali(k.ime)}
                 </div>
                 <div className="min-w-0">
-                  <p className="truncate font-medium text-gray-900">{k.ime}</p>
+                  <Link href={`/klijenti/${k.id}`} className="block truncate font-medium text-gray-900 hover:text-blue-600 hover:underline">
+  {k.ime}
+</Link>
                   <p className="truncate text-sm text-gray-500">
                     {[k.telefon, k.email].filter(Boolean).join(" · ") || "Nema kontakta"}
                   </p>

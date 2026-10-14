@@ -26,7 +26,7 @@ export default function LoginPage() {
       if (error) {
         setError(error.message);
       } else if (data.session) {
-        router.push("/klijenti");
+        router.push("/dashboard")
         router.refresh();
       } else {
         setMessage("Proveri email i potvrdi nalog, pa se prijavi.");
@@ -39,7 +39,7 @@ export default function LoginPage() {
       if (error) {
         setError(error.message);
       } else {
-        router.push("/klijenti");
+       router.push("/dashboard")
         router.refresh();
       }
     }
