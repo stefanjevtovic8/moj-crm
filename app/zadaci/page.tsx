@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { connection } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import Header from "@/app/components/Header";
+import Sidebar from "@/app/components/Sidebar";
 import ZadaciLista from "./ZadaciLista";
 
 async function ZadaciSadrzaj() {
@@ -26,10 +26,12 @@ async function ZadaciSadrzaj() {
     .order("ime", { ascending: true });
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Header email={user.email} aktivno="zadaci" />
-      <main className="mx-auto max-w-4xl px-6 py-8">
-        <ZadaciLista pocetni={zadaci ?? []} klijenti={klijenti ?? []} />
+    <div className="flex min-h-screen bg-gray-50">
+      <Sidebar email={user.email} />
+      <main className="flex-1 p-8 overflow-y-auto">
+        <div className="mx-auto max-w-4xl">
+          <ZadaciLista pocetni={zadaci ?? []} klijenti={klijenti ?? []} />
+        </div>
       </main>
     </div>
   );
