@@ -55,25 +55,45 @@ export default function CsvModul({ klijenti, onImportSuccess }: Props) {
     document.body.removeChild(link);
   }
 
-  // 2. PARSIRANJE CSV FAJLA
+  // 2. ROBUSTAN CSV PARSER (Podržava navodnike i zareze unutar teksta)
+  function parsirajCsvRed(red: string): string[] {
+    const rezultati: string[] = [];
+    let uNavodnicima = false;
+    let trenutniPolje = "";
+
+    for (let i = 0; i < red.length; i++) {
+      const char = red[i];
+      if (char === '"') {
+        if (uNavodnicima && red[i + 1] === '"') {
+          trenutniPolje += '"';
+          i++;
+        } else {
+          uNavodnicima = !uNavodnicima;
+        }
+      } else if (char === ',' && !uNavodnicima) {
+        rezultati.push(trenutniPolje.trim());
+        trenutniPolje = "";
+      } else {
+        trenutniPolje += char;
+      }
+    }
+    rezultati.push(trenutniPolje.trim());
+    return rezultati.map(val => val.replace(/^"|"$/g, ""));
+  }
+
   function parsirajCsvTekst(tekst: string): Record<string, string>[] {
     const linije = tekst.split(/\r\n|\n/).filter((l) => l.trim() !== "");
     if (linije.length < 2) return [];
 
-    const zaglavlje = linije[0].split(",").map((h) => h.trim().replace(/^"|"$/g, "").toLowerCase());
+    const zaglavlje = parsirajCsvRed(linije[0]).map((h) => h.toLowerCase());
     const zapisi: Record<string, string>[] = [];
 
     for (let i = 1; i < linije.length; i++) {
-      // Pravilan regex za izdvajanje vrednosti odvojenih zarezom unutar ili van navodnika
-      const vrednosti = linije[i].match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g) || linije[i].split(",");
+      const vrednosti = parsirajCsvRed(linije[i]);
       const objekat: Record<string, string> = {};
 
       zaglavlje.forEach((kljuc, indeks) => {
-        let val = vrednosti[indeks] ? vrednosti[indeks].trim() : "";
-        if (val.startsWith('"') && val.endsWith('"')) {
-          val = val.substring(1, val.length - 1).replace(/""/g, '"');
-        }
-        objekat[kljuc] = val;
+        objekat[kljuc] = vrednosti[indeks] || "";
       });
 
       zapisi.push(objekat);
@@ -109,7 +129,6 @@ export default function CsvModul({ klijenti, onImportSuccess }: Props) {
           return;
         }
 
-        // Mapiranje i validacija polja
         const pripremljeni = siroviPodaci
           .map((red) => {
             const ime = red["ime"] || red["name"] || red["ime i prezime"] || "";
@@ -162,7 +181,6 @@ export default function CsvModul({ klijenti, onImportSuccess }: Props) {
 
   return (
     <div className="flex gap-2">
-      {/* Dugme za Izvoz */}
       <button
         onClick={izveziCsv}
         className="flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-3.5 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50 transition shadow-sm"
@@ -173,7 +191,6 @@ export default function CsvModul({ klijenti, onImportSuccess }: Props) {
         Izvezi CSV
       </button>
 
-      {/* Dugme za Otvaranje Modala za Uvoz */}
       <button
         onClick={() => {
           setOtvorenModal(true);
@@ -187,7 +204,6 @@ export default function CsvModul({ klijenti, onImportSuccess }: Props) {
         Uvezi CSV
       </button>
 
-      {/* Modal za Uvoz */}
       {otvorenModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
           <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl space-y-4">
@@ -202,8 +218,7 @@ export default function CsvModul({ klijenti, onImportSuccess }: Props) {
             </div>
 
             <p className="text-xs text-gray-500">
-              Fajl mora sadržati kolonu <strong className="text-gray-700">Ime</strong>. Opcione kolone: 
-              <span className="italic"> Kompanija, Telefon, Email, Status, Vrednost, Napomena</span>.
+              Fajl mora sadržati kolonu <strong className="text-gray-700">Ime</strong>. Ukoliko naziv firme ili ime sadrži zarez, obavezno ga stavite u navodnike (npr. <span className="italic">&quot;Petar Petrović&quot;</span>).
             </p>
 
             <div className="rounded-xl border-2 border-dashed border-gray-200 p-6 text-center hover:border-blue-400 transition bg-gray-50/50">
